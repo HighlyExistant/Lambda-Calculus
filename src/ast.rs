@@ -1,4 +1,4 @@
-use std::{collections::LinkedList, fmt::Display, process::id};
+use std::{collections::LinkedList, fmt::Display};
 
 use gelato_parser::lexer::tokens::{Ident, Punct, Token};
 
@@ -40,6 +40,7 @@ impl Display for Abstraction {
 pub struct Term {
     pub name: Ident,
 }
+
 impl Display for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}", self.name.ident))
