@@ -16,15 +16,14 @@ impl ControlFlow {
     }
 }
 
-pub struct AppState {
+pub struct CalculatorState {
     pub statements: Statements,
 }
 
-impl AppState {
+impl CalculatorState {
     pub fn new(lexer: &mut Lexer) -> Result<Self, ASTError> {
-        let tokens = lexer.parse();
-        let mut tokens_iter = tokens.iter().cloned();
-        let statements = Statements::from_tokens(&mut tokens_iter)?;
+        let mut tokens = lexer.parse();
+        let statements = Statements::from_tokens(&mut tokens)?;
         Ok(Self { statements })
     }
     /// replaces all variables in the abstraction that aren't renamed

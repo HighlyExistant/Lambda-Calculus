@@ -1,6 +1,11 @@
-use crate::lexer::tokens::Token;
+use crate::lexer::tokens::{Token, Tokens};
 
 pub mod tokens;
+pub mod literal;
+pub mod delimiter;
+pub mod ident;
+pub mod punct;
+pub mod span;
 
 pub trait Parse: Sized {
     fn parse(lexer: &mut Lexer) -> Option<Self>;
@@ -15,12 +20,12 @@ impl Lexer {
     pub fn new(buf: String) -> Self {
         Self { buf, cursor: 0usize }
     }
-    pub fn parse(&mut self) -> Vec<Token> {
+    pub fn parse(&mut self) -> Tokens {
         let mut tokens = vec![];
         while let Some(token) = self.parse_token() {
             tokens.push(token);
         }
-        tokens
+        Tokens { tokens: tokens, next: 0 }
     }
     pub fn skip_whitespace(&mut self) {
         for c in self.buf.as_bytes()[self.cursor..self.buf.len()].iter().cloned() {

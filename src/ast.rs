@@ -1,11 +1,11 @@
 use std::{collections::LinkedList, fmt::Display};
 
-use gelato_parser::lexer::tokens::{Ident, Punct, Token};
+use gelato_parser::lexer::{ident::Ident, punct::Punct, span::Span, tokens::{Token, Tokens}};
 
 use crate::error::ASTError;
 
 pub trait FromTokens: Sized {
-    fn from_tokens(tokens: &mut impl ExactSizeIterator<Item = Token>) -> Result<Self, ASTError>;
+    fn from_tokens(tokens: &mut Tokens) -> Result<Self, ASTError>;
 }
 
 /// λvariable.next
@@ -62,7 +62,7 @@ impl Group {
 }
 impl Display for Group {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self.statements))
+        f.write_fmt(format_args!("({})", self.statements))
     }
 }
 /// S ::= λ<term>.<optional-statement> | 
@@ -81,7 +81,7 @@ impl Display for Statement {
                 abstraction.fmt(f)
             }
             Statement::Group(group) => {
-                f.write_fmt(format_args!("({})", group))
+                group.fmt(f)
             }
             Statement::Term(term) => {
                 term.fmt(f)
@@ -113,10 +113,10 @@ impl Statement {
     }
 }
 impl FromTokens for Statement {
-    fn from_tokens(tokens: &mut impl ExactSizeIterator<Item = Token>) -> Result<Self, ASTError> {
+    fn from_tokens(tokens: &mut Tokens) -> Result<Self, ASTError> {
         match tokens.next().ok_or(ASTError::EmptyTokenList)? {
-            Token::Punct(Punct { punct }) => { // Creating an Abstraction
-                if punct.as_str() == "\\" {
+            Token::Punct(punct) => { // Creating an Abstraction
+                if punct.punct.as_str() == "\\" {
                     let variable = tokens
                         .next().ok_or(ASTError::Syntax("Expected Variable".to_string()))?
                         .get_ident().ok_or(ASTError::Syntax("Expected Identifier".to_string()))?;
@@ -142,29 +142,51 @@ impl FromTokens for Statement {
             Token::Ident(ident) => {
                 return Ok(Self::Term(Term { name: ident }));
             }
-            Token::Group(group) => {
-                let mut tokens = group.tokens.iter().cloned();
-                return Ok(Self::Group(Group { statements: Statements::from_tokens(&mut tokens)? }));
+            Token::Group(mut group) => {
+                // let mut tokens = group.tokens.iter().cloned();
+                return Ok(Self::Group(Group { statements: Statements::from_tokens(&mut group.tokens)? }));
             }
             _ => return Err(ASTError::Syntax("Invalid Syntax".to_string())),
         }
     }
 }
-
+pub fn remove_multiple_whitespace(str: String) -> String {
+    let mut ret = String::new();
+    let mut whitespace_prev = false;
+    for c in str.chars() {
+        if c.is_whitespace() {
+            if !whitespace_prev {
+                ret.push(c);
+            }
+            whitespace_prev = true;
+        } else {
+            ret.push(c);
+            whitespace_prev = false;
+        }
+    }
+    ret
+}
 #[derive(Debug, Clone)]
 pub struct Statements {
     pub statements: LinkedList<Statement>,
 }
 impl Display for Statements {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut str = String::new();
+        
         for statement in self.statements.iter() {
-            statement.fmt(f)?;
+            str.push_str(format!("{}", statement).as_str());
+            str.push(' ');
+            // statement.fmt(f)?;
         }
+        let _ = str.pop();
+        str = remove_multiple_whitespace(str);
+        f.write_str(format!("{}", str).as_str())?;
         Ok(())
     }
 }
 impl FromTokens for Statements {
-    fn from_tokens(tokens: &mut impl ExactSizeIterator<Item = Token>) -> Result<Self, ASTError> {
+    fn from_tokens(tokens: &mut Tokens) -> Result<Self, ASTError> {
         let mut statements = LinkedList::new();
         loop {
             match Statement::from_tokens(tokens) {

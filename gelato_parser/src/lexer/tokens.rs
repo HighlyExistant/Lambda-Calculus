@@ -1,97 +1,6 @@
-use std::io::{Cursor, Read};
+use std::{fmt::{Display, Write}, io::{Cursor, Read}};
 
-use crate::lexer::{Lexer, Parse};
-
-#[derive(Debug, Clone)]
-pub enum Literal {
-    Number(String),
-    String(String),
-    Character(char),
-}
-impl Parse for Literal {
-    fn parse(tokenizer: &mut Lexer) -> Option<Self> {
-        let mut literal = String::new();
-        while tokenizer.is_next_literal() {
-            literal.push(tokenizer.next_char());
-        }
-        if literal.chars().next().unwrap() == '\"' {
-            return Some(Literal::String(literal));
-        }
-        Some(Literal::Number(literal))
-    }
-}
-#[derive(Debug, Clone)]
-pub struct Punct {
-    pub punct: String,
-}
-impl Punct {
-    pub fn is_punct(&self, str: &str) -> bool {
-        self.punct == str
-    }
-}
-impl Parse for Punct {
-    fn parse(tokenizer: &mut Lexer) -> Option<Self> {
-        let mut punct = String::new();
-        if tokenizer.is_next_punct() {
-            punct.push(tokenizer.next_char());
-        }
-        Some(Self { punct })
-    }
-}
-#[derive(Debug, Clone)]
-pub struct Delimiter {
-    pub open: char,
-    pub close: char,
-    pub tokens: Vec<Token>,
-}
-impl Parse for Delimiter {
-    fn parse(tokenizer: &mut Lexer) -> Option<Self> {
-        let open = tokenizer.next_char();
-        let mut del = Delimiter {
-            open,
-            close: '\0',
-            tokens: vec![]
-        };
-        while let Some(token) = tokenizer.parse_token() {
-            let get = tokenizer.get_char();
-            del.tokens.push(token);
-            match open {
-                '(' => if get == ')' { 
-                    del.close = get;
-                    break; 
-                }
-                '{' => if get == '}' { 
-                    del.close = get;
-                    break; 
-                }
-                '<' => if get == '>' { 
-                    del.close = get;
-                    break; 
-                }
-                '[' => if get == ']' { 
-                    del.close = get;
-                    break; 
-                }
-                _ => {}
-            }
-        }
-        tokenizer.cursor += 1;
-        Some(del)
-    }
-}
-#[derive(Debug, Clone, PartialEq)]
-pub struct Ident {
-    pub ident: String,
-}
-impl Parse for Ident {
-    fn parse(tokenizer: &mut Lexer) -> Option<Self> {
-        let mut ident = String::new();
-        while tokenizer.is_next_ident() {
-            ident.push(tokenizer.next_char());
-        }
-        Some(Self { ident })
-    }
-}
+use crate::lexer::{Lexer, Parse, delimiter::Delimiter, ident::Ident, literal::Literal, punct::Punct, span::Span};
 
 #[derive(Debug, Clone)]
 pub enum Token {
@@ -100,8 +9,35 @@ pub enum Token {
     Punct(Punct),
     Group(Delimiter),
 }
+// #if = (\b.\t.\f.b t f)
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Group(group) => {
+                f.write_str(format!("{}", group).as_str())
+            }
+            Token::Ident(ident) => {
+                f.write_str(format!("{}", ident).as_str())
+            }
+            Token::Literal(literal) => {
+                f.write_str(format!("{}", literal).as_str())
+            }
+            Token::Punct(punct) => {
+                f.write_str(format!("{}", punct).as_str())
+            }
+        }
+    }
+}
 
 impl Token {
+    pub fn span(&self) -> &Span {
+        match self {
+            Token::Group(g) => &g.span,
+            Token::Ident(ident) => &ident.span,
+            Token::Literal(literal) => &literal.span,
+            Token::Punct(punct) => &punct.span,
+        }
+    }
     pub fn is_literal(&self) -> bool {
         if let Self::Literal(_) = self {
             return true;
@@ -174,5 +110,36 @@ impl Parse for Token {
             return Some(Self::Group(Delimiter::parse(tokenizer)?));
         }
         None
+    }
+}
+#[derive(Debug, Clone)]
+pub struct Tokens {
+    pub tokens: Vec<Token>,
+    pub next: usize,
+
+}
+impl Iterator for Tokens {
+    type Item = Token;
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.tokens.get(self.next)?;
+        self.next += 1;
+        Some(next.clone())
+    }
+}
+impl Display for Tokens {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let slice = &self.tokens[self.next..self.tokens.len()];
+        // let mut prev_span = self.next..self.tokens.len();
+        // let mut current_span = self.next..self.tokens.len();
+        for i in slice {
+            // current_span = i.span().range.clone();
+            // for _ in 0..(current_span.start-prev_span.end) {
+            //     f.write_char(' ')?;
+            //     println!("prev: {prev_span:?} curr: {current_span:?}");
+            // }
+            f.write_str(format!("{}", i).as_str())?;
+            // prev_span = current_span;
+        }
+        Ok(())
     }
 }
