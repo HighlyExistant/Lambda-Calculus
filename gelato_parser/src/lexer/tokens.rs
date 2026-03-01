@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Write}, io::{Cursor, Read}};
+use std::{fmt::Display};
 
 use crate::lexer::{Lexer, Parse, delimiter::Delimiter, ident::Ident, literal::Literal, punct::Punct, span::Span};
 
@@ -129,16 +129,8 @@ impl Iterator for Tokens {
 impl Display for Tokens {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let slice = &self.tokens[self.next..self.tokens.len()];
-        // let mut prev_span = self.next..self.tokens.len();
-        // let mut current_span = self.next..self.tokens.len();
         for i in slice {
-            // current_span = i.span().range.clone();
-            // for _ in 0..(current_span.start-prev_span.end) {
-            //     f.write_char(' ')?;
-            //     println!("prev: {prev_span:?} curr: {current_span:?}");
-            // }
             f.write_str(format!("{}", i).as_str())?;
-            // prev_span = current_span;
         }
         Ok(())
     }

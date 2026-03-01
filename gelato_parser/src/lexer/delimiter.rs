@@ -2,7 +2,6 @@ use std::fmt::{Display, Write};
 
 use crate::lexer::{Lexer, Parse, span::Span, tokens::Tokens};
 
-
 #[derive(Debug, Clone)]
 pub struct Delimiter {
     pub span: Span,

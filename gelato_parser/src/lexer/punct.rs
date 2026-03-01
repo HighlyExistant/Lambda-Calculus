@@ -2,7 +2,6 @@ use std::fmt::Display;
 
 use crate::lexer::{Lexer, Parse, span::Span};
 
-
 #[derive(Debug, Clone)]
 pub struct Punct {
     pub span: Span,

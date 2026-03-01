@@ -1,6 +1,8 @@
+#![allow(unused)]
+
 use std::{collections::LinkedList, fmt::Display};
 
-use gelato_parser::lexer::{ident::Ident, punct::Punct, span::Span, tokens::{Token, Tokens}};
+use gelato_parser::lexer::{ident::Ident, tokens::{Token, Tokens}};
 
 use crate::error::ASTError;
 

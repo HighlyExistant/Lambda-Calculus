@@ -1,8 +1,9 @@
+#![allow(unused)]
 use std::{collections::HashMap, process::Command};
 
-use gelato_parser::lexer::{Lexer, tokens::{Token, Tokens}};
+use gelato_parser::lexer::{Lexer, tokens::Tokens};
 
-use crate::{app::calculator::Calculator, ast::{FromTokens, Statements}, error::ASTError};
+use crate::{app::calculator::Calculator, error::ASTError};
 
 pub mod state;
 pub mod calculator;

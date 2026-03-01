@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::collections::LinkedList;
 
 use gelato_parser::lexer::Lexer;

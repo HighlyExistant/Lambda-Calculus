@@ -30,7 +30,7 @@ impl CalculatorState {
     /// in sub abstraction.
     pub fn replace_names(statements: &mut Statements, from: &Term, to: &Statement) {
         // Iterate over all the statements to change any terms inside of them
-        // that match with 'from', with 'to'
+        // that match 'from', with 'to'
         for statement in statements.statements.iter_mut() {
             match statement {
                 // If the variable is within another abstraction then we need to check for
@@ -47,7 +47,7 @@ impl CalculatorState {
                     Self::replace_names(&mut group.statements, from, to); 
                 }
                 Statement::Term(term) => {
-                    // If the variable matches with a term, and to is an abstraction
+                    // If the variable matches with a term, and 'to' is an abstraction
                     // we can replace it in a group.
                     if to.is_abstraction() {
                         let mut statements = LinkedList::new();
